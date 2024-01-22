@@ -23,11 +23,12 @@ def handle_model_selection(available_models, selected_model, default_model):
         selected_index = available_models.index(selected_model)
     else:
         selected_index = available_models.index(default_model)
+
+    # Display the select box for the user to choose a model
     selected_model = st.selectbox(
         "Select a model", available_models, index=selected_index
     )
     return selected_model
-
 
 def exchange_code_for_api_key(code: str):
     print(f"Exchanging code for API key: {code}")
@@ -45,41 +46,37 @@ def exchange_code_for_api_key(code: str):
         st.error(f"Error exchanging code for API key: {e}")
 
 
+
 def sidebar(default_model):
     with st.sidebar:
-        params = st.experimental_get_query_params()
-        code = params.get("code", [""])[0]
-        if code:
-            exchange_code_for_api_key(code)
-        # not storing sensitive api_key in query params
-        api_key = st.session_state.get("api_key")
-        selected_model = params.get("model", [None])[0] or st.session_state.get(
-            "model", None
-        )
-        url = utils.url_to_hostname(utils.get_url())
-        if not api_key:
-            st.button(
-                "Connect OpenRouter",
-                on_click=utils.open_page,
-                args=(f"{constants.OPENROUTER_BASE}/auth?callback_url={url}",),
-            )
-        available_models = get_available_models()
-        selected_model = handle_model_selection(
-            available_models, selected_model, default_model
+        st.title('🦙💬 Llama 2 Chatbot')
+        if 'OPENROUTER_API_TOKEN' in st.secrets:
+            st.success('API key already provided!', icon='✅')
+            api_key = st.secrets['OPENROUTER_API_TOKEN']
+        else:
+            api_key = st.text_input('Enter OpenRouter API token:', type='password')
+            if not api_key:  # Add any necessary validation for your API key here
+                st.warning('Please enter your credentials!', icon='⚠️')
+            else:
+                st.success('Proceed to entering your prompt message!', icon='👉')
+
+        available_models = [
+            "nousresearch/nous-capybara-7b",
+            "mistralai/mistral-7b-instruct",
+            "huggingfaceh4/zephyr-7b-beta",
+            "openchat/openchat-7b",
+            "gryphe/mythomist-7b",
+            "openrouter/cinematika-7b",
+            "rwkv/rwkv-5-world-3b",
+            "recursal/rwkv-5-3b-ai-town"
+        ]
+        selected_model = st.selectbox(
+            "Select a model", available_models, index=available_models.index(default_model)
         )
         st.session_state["model"] = selected_model
         st.experimental_set_query_params(model=selected_model)
 
-        if api_key:
-            st.text("Connected to OpenRouter")
-            if st.button("Log out"):
-                del st.session_state["api_key"]
-                st.experimental_rerun()
-        st.markdown(
-            "[View the source code](https://github.com/alexanderatallah/openrouter-streamlit)"
-        )
-        # st.markdown(
-        #     "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/alexanderatallah/openrouter-streamlit?quickstart=1)"
-        # )
+        # Rest of your code here...
 
     return api_key, selected_model
+
